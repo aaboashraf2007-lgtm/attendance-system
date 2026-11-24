@@ -1,4 +1,4 @@
-vconst firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyDKLFmjBdv0Nh_H8-QGrzno0Vn1xyuIYxE",
   authDomain: "attendance-system-2026-c4993.firebaseapp.com",
   projectId: "attendance-system-2026-c4993",
