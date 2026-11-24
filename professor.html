@@ -53,6 +53,8 @@
             ><input type="number" id="radius" min="15" value="40" />
           </div>
         </div>
+        <label>إحداثيات القاعة (اختياري) - لو سيبتها فاضية بيستخدم موقع الجهاز</label
+        ><input id="hallLL" placeholder="مثال: 30.04440, 31.23570" dir="ltr" />
         <button class="btn btn-green" id="startBtn" onclick="startSession()">
           ابدأ الجلسة
         </button>
@@ -130,23 +132,40 @@
         const msg = $("setupMsg");
         msg.className = "msg warn";
         msg.innerText = "جاري تحديد موقع القاعة...";
-        let pos;
-        try {
-          pos = await getPosition();
-        } catch (e) {
-          msg.className = "msg err";
-          msg.innerText = "لازم تسمح بالموقع (GPS) عشان نحدد القاعة";
-          return;
-        }
-
-        if (
-          pos.coords.accuracy > 60 &&
-          !confirm(
-            `دقة الموقع ضعيفة (±${Math.round(pos.coords.accuracy)} متر). الأفضل تبدأ الجلسة من الموبايل وانت جوه القاعة. تكمل؟`,
-          )
-        ) {
-          msg.innerText = "";
-          return;
+        let lat, lng;
+        const raw = $("hallLL").value.trim();
+        if (raw) {
+          const m = raw.match(
+            /^(-?\d+(?:\.\d+)?)\s*[,،\s]\s*(-?\d+(?:\.\d+)?)$/,
+          );
+          lat = m ? parseFloat(m[1]) : NaN;
+          lng = m ? parseFloat(m[2]) : NaN;
+          if (!(Math.abs(lat) <= 90 && Math.abs(lng) <= 180)) {
+            msg.className = "msg err";
+            msg.innerText =
+              "الإحداثيات غلط. اكتبها كده: 30.04440, 31.23570 (انسخها من خرائط جوجل)";
+            return;
+          }
+        } else {
+          let pos;
+          try {
+            pos = await getPosition();
+          } catch (e) {
+            msg.className = "msg err";
+            msg.innerText = "لازم تسمح بالموقع (GPS) عشان نحدد القاعة";
+            return;
+          }
+          if (
+            pos.coords.accuracy > 60 &&
+            !confirm(
+              `دقة الموقع ضعيفة (±${Math.round(pos.coords.accuracy)} متر). الأفضل تبدأ الجلسة من الموبايل وانت جوه القاعة. تكمل؟`,
+            )
+          ) {
+            msg.innerText = "";
+            return;
+          }
+          lat = pos.coords.latitude;
+          lng = pos.coords.longitude;
         }
         const now = new Date(nowMs());
         const data = {
@@ -155,8 +174,8 @@
           group: $("group").value,
           lecture: +$("lecture").value,
           radius: +$("radius").value,
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
+          lat: lat,
+          lng: lng,
           date: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`,
           day: DAYS[now.getDay()],
           status: "open",
